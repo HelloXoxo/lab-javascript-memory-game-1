@@ -25,62 +25,44 @@ var cards = [
   { name: 'thor',            img: 'thor.jpg' }
 ];
 
-var memoryGame = new MemoryGame(cards);
+$(document).ready(function(){
+  var memoryGame = new MemoryGame(cards);
+  memoryGame.shuffleCards();
   var html = '';
-  memoryGame.cards.forEach(function (pic, index) {
-    html += '<div class= "card" id="card_' + pic.name + '">';
-    html += '<div class="back"';
-    html += '    name="'       + pic.img +  '">';
-    html += '</div>';
-    html += '<div class="front" ';
-    html += 'style="background: url(img/' + pic.img + '") no-repeat"';
-    html += '</div>';
+  memoryGame.cards.forEach(function (pic) {
+    html += '<div class="card" data-card-name="'+ pic.name +'">';
+    html += '  <div class="back" name="'+ pic.img +'"></div>';
+    html += '  <div class="front" style="background: url(img/'+ pic.img +') no-repeat"></div>';
     html += '</div>';
   });
 
   // Add all the div's to the HTML
-  document.getElementById('memory_board').innerHTML = html;
+  $('#memory_board').html(html);
+
   // Bind the click event of each element to a function
-$('.back').on('click', function () {
-    if (!this.classList.contains('active')) {
-      memoryGame.pickedCards.push(this);
-      displayClickedCard(this);
-      if(memoryGame.pickedCards.length > 1) {
-        $('.front,.back').addClass('blocked');
-        var firstCard = memoryGame.pickedCards[0].getAttribute("name");
-        var secondCard = memoryGame.pickedCards[1].getAttribute("name");
-        if(memoryGame.checkIfPair(firstCard, secondCard)) {
-          prepareNextTurn();
-        } else {
-          turnBackCards();
-        }
+  $('.back').click(function () {
+    // TODO: write some code here
+    $(this).toggleClass("front back");
+    $(this).siblings().toggleClass("front back");
+    memoryGame.pickedCards.push(  $(this).parent().attr("data-card-name")  )
+    if (memoryGame.pickedCards.length === 2) {
+      var result = memoryGame.checkIfPair(memoryGame.pickedCards[0], memoryGame.pickedCards[1])
+      console.log(result)
+      if (!result) {
+        setTimeout(()=>{
+          $(this).toggleClass("front back");
+          $(this).siblings().toggleClass("front back");
+
+          $(`[data-card-name='${memoryGame.pickedCards[0]}']`).children('.front[name]').siblings().toggleClass("front back");
+          $(`[data-card-name='${memoryGame.pickedCards[0]}']`).children('.front[name]').toggleClass("front back");
+          memoryGame.pickedCards = []
+        }, 1000)
+      } else {
+        memoryGame.pickedCards = []
       }
-      printGameInfo();
-      if (memoryGame.finished()) { alert('You wooon!!!'); }
+
+      $("#pairs_clicked").html(memoryGame.pairsClicked);
+      $("#pairs_guessed").html(memoryGame.pairsGuessed);
     }
+  });
 });
-
-function turnBackCards() {
-  setTimeout(function () {
-    memoryGame.pickedCards[0].style.background = '#456783';
-    memoryGame.pickedCards[1].style.background = '#456783';
-    memoryGame.pickedCards[0].classList.remove('active');
-    memoryGame.pickedCards[1].classList.remove('active');
-    prepareNextTurn();
-  }, 1000);
-}
-
-function prepareNextTurn() {
-  memoryGame.pickedCards = [];
-  $('.front,.back').removeClass('blocked');
-}
-
-function printGameInfo() {
-  document.getElementById('pairs_clicked').innerHTML = memoryGame.pairsClicked;
-  document.getElementById('pairs_guessed').innerHTML = memoryGame.pairsGuessed;
-}
-
-function displayClickedCard(card) {
-  card.className += ' active';
-  card.style.background = 'url(img/' + card.getAttribute('name') + ') no-repeat';
-}
